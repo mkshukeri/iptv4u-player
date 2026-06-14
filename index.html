@@ -4,30 +4,32 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>IPTV4U Player</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     /* CSS Variables for Theme */
     :root {
-      --bg-dark: #03111F;
-      --bg-mid: #061B33;
-      --bg-light: #0A2A4A;
-      --bg-lighter: #123B63;
+      --bg-dark: #010A14;
+      --bg-mid: #041223;
+      --bg-light: #08213E;
+      --glass-bg: rgba(20, 25, 40, 0.45);
+      --glass-bg-hover: rgba(30, 38, 55, 0.55);
+      --glass-bg-active: rgba(45, 55, 80, 0.5);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --glass-shadow: 0 32px 64px rgba(0, 0, 0, 0.6);
       
-      --glass-bg: rgba(255, 255, 255, 0.08);
-      --glass-bg-hover: rgba(255, 255, 255, 0.12);
-      --glass-bg-active: rgba(255, 255, 255, 0.16);
-      --glass-border: rgba(255, 255, 255, 0.18);
-      --glass-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+      --accent-primary: #3388FF;
+      --accent-secondary: #66B2FF;
+      --accent-glow: rgba(51, 136, 255, 0.4);
       
-      --accent-primary: #5DADE2;
-      --accent-secondary: #8EC5FF;
+      --text-main: #FFFFFF;
+      --text-muted: #8AA4C4;
       
-      --text-main: #F5F9FF;
-      --text-muted: #A9BDD1;
+      --error: #FF5A70;
+      --success: #20E08B;
       
-      --error: #FF7B8A;
-      --success: #7CE0B8;
-      
-      --radius-sm: 8px;
+      --radius-sm: 10px;
       --radius-md: 16px;
       --radius-lg: 24px;
     }
@@ -39,16 +41,18 @@
     }
 
     body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
       background-color: var(--bg-dark);
       background-image: 
-        radial-gradient(circle at 15% 50%, rgba(93, 173, 226, 0.08), transparent 25%),
-        radial-gradient(circle at 85% 30%, rgba(142, 197, 255, 0.06), transparent 25%);
+        radial-gradient(circle at 0% 0%, rgba(51, 136, 255, 0.12), transparent 40%),
+        radial-gradient(circle at 100% 100%, rgba(102, 178, 255, 0.1), transparent 40%),
+        linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-mid) 100%);
       color: var(--text-main);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       overflow-x: hidden;
+      letter-spacing: -0.01em;
     }
 
     /* Typography */
@@ -103,10 +107,12 @@
 
     /* Glass Panels */
     .glass {
-      background: var(--glass-bg);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
+      background: linear-gradient(145deg, rgba(25, 33, 44, 0.6), rgba(10, 15, 25, 0.4));
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
       border: 1px solid var(--glass-border);
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      border-left: 1px solid rgba(255, 255, 255, 0.1);
       box-shadow: var(--glass-shadow);
       border-radius: var(--radius-lg);
     }
@@ -187,33 +193,37 @@
 
     input[type="url"], input[type="text"], select {
       width: 100%;
-      padding: 14px 16px;
-      background: rgba(0, 0, 0, 0.2);
+      padding: 16px 18px;
+      background: rgba(0, 0, 0, 0.25);
       border: 1px solid var(--glass-border);
       border-radius: var(--radius-md);
       color: var(--text-main);
       font-size: 1rem;
-      transition: border 0.3s ease;
+      transition: all 0.3s ease;
       outline: none;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
     }
 
     input:focus, select:focus {
       border-color: var(--accent-primary);
+      background: rgba(0, 0, 0, 0.4);
+      box-shadow: 0 0 0 3px rgba(51, 136, 255, 0.2), inset 0 2px 4px rgba(0,0,0,0.2);
     }
 
     .upload-zone {
-      border: 2px dashed var(--glass-border);
+      border: 2px dashed rgba(255,255,255,0.15);
       border-radius: var(--radius-md);
-      padding: 40px 20px;
+      padding: 48px 20px;
       text-align: center;
       cursor: pointer;
       transition: all 0.3s;
-      background: rgba(0,0,0,0.1);
+      background: linear-gradient(to bottom, rgba(255,255,255,0.02), rgba(0,0,0,0.1));
     }
 
     .upload-zone:hover {
       border-color: var(--accent-primary);
-      background: rgba(0,0,0,0.2);
+      background: rgba(51, 136, 255, 0.05);
+      transform: translateY(-2px);
     }
 
     input[type="file"] {
@@ -222,33 +232,42 @@
 
     .btn {
       width: 100%;
-      padding: 14px 24px;
+      padding: 16px 24px;
       background: var(--glass-bg);
       border: 1px solid var(--glass-border);
       color: var(--text-main);
       border-radius: var(--radius-md);
       font-size: 1rem;
-      font-weight: 600;
+      font-weight: 500;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
 
     .btn:hover {
       background: var(--glass-bg-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+    }
+    
+    .btn:active {
+      transform: translateY(0);
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, var(--accent-primary), #2C82C9);
-      border: none;
+      background: linear-gradient(135deg, #1A73E8, #4285F4);
+      border: 1px solid rgba(255,255,255,0.15);
+      box-shadow: 0 4px 15px rgba(26, 115, 232, 0.4);
     }
 
     .btn-primary:hover {
-      background: linear-gradient(135deg, #6BB7E7, #368FD8);
-      box-shadow: 0 0 20px rgba(93, 173, 226, 0.4);
+      background: linear-gradient(135deg, #4285F4, #5C9AFA);
+      box-shadow: 0 8px 25px rgba(26, 115, 232, 0.6);
+      border: 1px solid rgba(255,255,255,0.3);
     }
 
     .divider {
@@ -316,37 +335,42 @@
     .channel-item {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 12px;
+      gap: 16px;
+      padding: 14px 16px;
       border-radius: var(--radius-sm);
       background: transparent;
       cursor: pointer;
       border: 1px solid transparent;
-      transition: all 0.2s;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .channel-item:hover {
       background: var(--glass-bg-hover);
+      transform: translateX(4px);
     }
 
     .channel-item.active {
-      background: rgba(93, 173, 226, 0.15);
-      border-color: rgba(93, 173, 226, 0.4);
-      box-shadow: inset 0 0 12px rgba(93, 173, 226, 0.1);
+      background: linear-gradient(90deg, rgba(51, 136, 255, 0.2), rgba(51, 136, 255, 0.05));
+      border: 1px solid rgba(51, 136, 255, 0.3);
+      border-left: 3px solid var(--accent-primary);
+      box-shadow: inset 0 0 20px rgba(51, 136, 255, 0.1);
     }
 
     .channel-logo {
-      width: 40px;
-      height: 40px;
-      border-radius: 6px;
-      background: rgba(0,0,0,0.3);
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
       display: flex;
       align-items: center;
       justify-content: center;
       object-fit: contain;
-      font-size: 0.7rem;
+      font-size: 0.75rem;
+      font-weight: 500;
       color: var(--text-muted);
       overflow: hidden;
+      flex-shrink: 0;
     }
 
     .channel-logo img {
@@ -406,9 +430,9 @@
     .player-overlay-msg {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.7);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -425,11 +449,21 @@
     .player-controls {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
+      gap: 12px;
     }
 
     .player-controls .btn {
       background: var(--glass-bg);
+      padding: 12px;
+      font-size: 0.95rem;
+    }
+    
+    .player-controls .btn svg {
+      opacity: 0.8;
+      transition: opacity 0.2s;
+    }
+    .player-controls .btn:hover svg {
+      opacity: 1;
     }
 
     .stream-info {
@@ -484,6 +518,12 @@
 
     .loading-card-wrapper {
       position: relative;
+      animation: pulseGlow 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes pulseGlow {
+      0% { transform: scale(0.98); filter: brightness(0.9); }
+      100% { transform: scale(1.02); filter: brightness(1.1); }
     }
 
     /* The glowing border animation */
@@ -519,7 +559,7 @@
       font-size: 1.2rem;
       font-weight: 500;
       color: var(--text-main);
-      animation: breathe 2s ease-in-out infinite;
+      transition: opacity 0.4s ease;
     }
 
     @keyframes spinGlow {
@@ -534,21 +574,29 @@
 
     /* Responsive */
     @media (max-width: 900px) {
+      .container { padding: 16px; }
       #dashboard-screen {
-        flex-direction: column-reverse;
+        flex-direction: column; /* Video player on top */
       }
       .sidebar {
         width: 100%;
-        height: 500px; /* Fixed height on mobile so it doesn't take infinite space */
+        height: 60vh;
       }
       .player-controls {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
       }
+      .player-controls .btn { font-size: 0; padding: 12px; }
+      .player-controls .btn svg { width: 24px; height: 24px; margin: 0; }
     }
     
     @media (max-width: 600px) {
-      .welcome-card { padding: 24px; border-radius: 0; border: none; box-shadow: none; }
-      header { border-radius: 0; border-left: none; border-right: none; }
+      header { flex-direction: column; text-align: center; gap: 12px; border-radius: var(--radius-md); padding: 20px;}
+      .welcome-card { padding: 32px 20px; }
+      .player-controls { grid-template-columns: repeat(2, 1fr); }
+      .player-controls .btn { font-size: 0.9rem; gap: 6px; }
+      .player-controls .btn svg { width: 18px; height: 18px; }
+      .stream-info { padding: 16px; }
     }
   </style>
 </head>
@@ -727,12 +775,33 @@
     };
 
     // --- UI Helpers ---
-    function showLoading(msg) {
-      loaderMsg.textContent = msg;
+    let loadingInterval;
+    const loadingMessages = [
+      "Loading playlist...",
+      "Parsing channels...",
+      "Preparing your player..."
+    ];
+    let msgIndex = 0;
+
+    function showLoading() {
+      clearInterval(loadingInterval);
+      msgIndex = 0;
+      loaderMsg.textContent = loadingMessages[0];
+      loaderMsg.style.opacity = 1;
       loadingOverlay.classList.add('active');
+      
+      loadingInterval = setInterval(() => {
+        loaderMsg.style.opacity = 0;
+        setTimeout(() => {
+          msgIndex = (msgIndex + 1) % loadingMessages.length;
+          loaderMsg.textContent = loadingMessages[msgIndex];
+          loaderMsg.style.opacity = 1;
+        }, 400); 
+      }, 2000);
     }
 
     function hideLoading() {
+      clearInterval(loadingInterval);
       loadingOverlay.classList.remove('active');
     }
 
@@ -768,31 +837,34 @@
       const url = document.getElementById('playlist-url').value.trim();
       if (!url) return alert("Please enter a playlist URL");
 
-      showLoading("Fetching remote playlist...");
+      showLoading();
       
       try {
         const response = await fetch(url);
         if (!response.ok) throw new Error("Network response was not ok");
         const text = await response.text();
         
-        showLoading("Parsing channels...");
-        processPlaylistData(text);
+        // Artificial delay to showcase the smooth cycling loader
+        setTimeout(() => {
+          processPlaylistData(text);
+          hideLoading();
+        }, 3000);
       } catch (err) {
         alert("Failed to load playlist from URL. It might be invalid, or blocked by CORS security constraints.");
-      } finally {
         hideLoading();
       }
     }
 
     function loadFromFile() {
       if (!selectedFile) return;
-      showLoading("Reading local file...");
+      showLoading();
       
       const reader = new FileReader();
       reader.onload = function(e) {
-        showLoading("Parsing channels...");
-        processPlaylistData(e.target.result);
-        hideLoading();
+        setTimeout(() => {
+          processPlaylistData(e.target.result);
+          hideLoading();
+        }, 3000);
       };
       reader.onerror = function() {
         alert("Error reading file.");
@@ -804,7 +876,7 @@
     function loadLastPlaylist() {
       const savedSettings = localStorage.getItem('iptv4u_channels');
       if (savedSettings) {
-        showLoading("Restoring your channels...");
+        showLoading();
         setTimeout(() => {
           try {
             channels = JSON.parse(savedSettings);
@@ -816,7 +888,7 @@
             localStorage.removeItem('iptv4u_channels');
           }
           hideLoading();
-        }, 500); // Small delay so the premium glow animation is visible
+        }, 1500); // Small delay so the premium glow animation is visible
       }
     }
 
