@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
   <style>
     /* CSS Variables for Theme */
     :root {
@@ -269,6 +270,15 @@
       box-shadow: 0 8px 25px rgba(26, 115, 232, 0.6);
       border: 1px solid rgba(255,255,255,0.3);
     }
+    
+    .btn:disabled, .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+      background: var(--glass-bg);
+      border-color: var(--glass-border);
+    }
 
     .divider {
       display: flex;
@@ -419,6 +429,49 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      transition: box-shadow 0.4s ease;
+    }
+
+    .player-wrapper.is-loading {
+      box-shadow: 0 0 40px rgba(26, 115, 232, 0.4), inset 0 0 20px rgba(26, 115, 232, 0.2);
+      border-color: rgba(51, 136, 255, 0.3);
+    }
+
+    .running-glow {
+      position: absolute;
+      inset: 0;
+      z-index: 20; 
+      pointer-events: none;
+      border-radius: var(--radius-lg);
+      padding: 3px; 
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .player-wrapper.is-loading .running-glow {
+       opacity: 1;
+    }
+
+    .running-glow::before {
+      content: '';
+      position: absolute;
+      top: -50%; left: -50%; bottom: -50%; right: -50%;
+      background: conic-gradient(
+        from 0deg, 
+        transparent 60%, 
+        rgba(26, 115, 232, 0.2) 75%,
+        rgba(51, 136, 255, 0.9) 90%, 
+        #67E8F9 100%
+      );
+      animation: spinBorderLoader 3s linear infinite;
+    }
+
+    @keyframes spinBorderLoader {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
 
     video {
@@ -518,12 +571,13 @@
 
     .loading-card-wrapper {
       position: relative;
-      animation: pulseGlow 3s ease-in-out infinite alternate;
+      animation: heartbeatCard 1.5s cubic-bezier(0.25, 0.8, 0.25, 1) infinite;
     }
 
-    @keyframes pulseGlow {
-      0% { transform: scale(0.98); filter: brightness(0.9); }
-      100% { transform: scale(1.02); filter: brightness(1.1); }
+    @keyframes heartbeatCard {
+      0%, 28%, 70%, 100% { transform: scale(1); }
+      14% { transform: scale(1.01); }
+      42% { transform: scale(1.02); }
     }
 
     /* The glowing border animation */
@@ -532,18 +586,35 @@
       position: absolute;
       inset: -4px;
       border-radius: 28px;
-      background: conic-gradient(
-        from 0deg, 
+      background: linear-gradient(
+        135deg, 
         #4DA3FF, 
         #67E8F9, 
-        #8EC5FF, 
-        rgba(255, 170, 80, 0.4), 
-        #4DA3FF
+        rgba(255, 170, 80, 0.4),
+        #8EC5FF
       );
       filter: blur(14px);
-      animation: spinGlow 3s linear infinite;
+      animation: heartbeatGlow 1.5s cubic-bezier(0.25, 0.8, 0.25, 1) infinite;
       z-index: -1;
       opacity: 0.8;
+    }
+
+    @keyframes heartbeatGlow {
+      0%, 28%, 70%, 100% { 
+        transform: scale(1);
+        opacity: 0.6;
+        filter: blur(12px);
+      }
+      14% { 
+        transform: scale(1.03);
+        opacity: 0.9;
+        filter: blur(18px);
+      }
+      42% { 
+        transform: scale(1.05);
+        opacity: 1;
+        filter: blur(24px);
+      }
     }
 
     .loading-card {
@@ -627,8 +698,8 @@
         <p>Choose how you want to load your IPTV playlist to begin.</p>
         
         <div class="tabs">
-          <button class="tab-btn active" onclick="switchTab('url')">Paste URL</button>
-          <button class="tab-btn" onclick="switchTab('file')">Select File</button>
+          <button class="tab-btn active" onclick="switchTab(event, 'url')">Paste URL</button>
+          <button class="tab-btn" onclick="switchTab(event, 'file')">Select File</button>
         </div>
 
         <div id="tab-url" class="tab-content active">
@@ -642,7 +713,7 @@
         <div id="tab-file" class="tab-content">
           <div class="input-group">
             <label>Local Playlist File</label>
-            <div class="upload-zone" onclick="document.getElementById('file-input').click()">
+            <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
               <p id="file-name-display" style="color: var(--text-main); margin-bottom: 8px;">Drag & drop or click to browse</p>
               <p style="font-size: 0.8rem; margin: 0;">Supports .m3u and .m3u8 files</p>
             </div>
@@ -686,6 +757,7 @@
       <!-- Right Panel: Player -->
       <main class="main-player">
         <div class="player-wrapper">
+          <div class="running-glow"></div>
           <!-- Native HTML5 Video -->
           <video id="player" controls autoplay preload="auto">
             Your browser does not support the video element.
@@ -740,6 +812,7 @@
     let groups = new Set();
     let currentChannel = null;
     let selectedFile = null;
+    let hlsInstance = null;
 
     // --- DOM Elements ---
     const welcomeScreen = document.getElementById('welcome-screen');
@@ -805,11 +878,13 @@
       loadingOverlay.classList.remove('active');
     }
 
-    function switchTab(tabId) {
+    function switchTab(e, tabId) {
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
       
-      event.target.classList.add('active');
+      if (e && e.target) {
+        e.target.classList.add('active');
+      }
       document.getElementById('tab-' + tabId).classList.add('active');
     }
 
@@ -821,15 +896,58 @@
     function setStatus(state, msg) {
       statusWrapper.className = 'status-badge status-' + state;
       statusText.textContent = msg || state;
+      
+      const playerWrapper = document.querySelector('.player-wrapper');
+      if (playerWrapper) {
+        if (state === 'loading') {
+          playerWrapper.classList.add('is-loading');
+        } else {
+          playerWrapper.classList.remove('is-loading');
+        }
+      }
     }
 
     // --- Loading Logic ---
+    const uploadZone = document.getElementById('upload-zone');
+    
+    uploadZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadZone.style.borderColor = 'var(--accent-primary)';
+      uploadZone.style.background = 'rgba(51, 136, 255, 0.1)';
+    });
+
+    uploadZone.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      uploadZone.style.borderColor = '';
+      uploadZone.style.background = '';
+    });
+
+    uploadZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadZone.style.borderColor = '';
+      uploadZone.style.background = '';
+      
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        handleFile(e.dataTransfer.files[0]);
+      }
+    });
+
     function handleFileSelect(event) {
-      const file = event.target.files[0];
+      if (event.target.files && event.target.files.length > 0) {
+        handleFile(event.target.files[0]);
+      }
+    }
+
+    function handleFile(file) {
       if (file) {
         selectedFile = file;
         document.getElementById('file-name-display').textContent = file.name;
-        document.getElementById('btn-open-file').disabled = false;
+        
+        // Remove disabled attribute from open playlist button
+        const btnOpen = document.getElementById('btn-open-file');
+        btnOpen.removeAttribute('disabled');
+        btnOpen.style.opacity = '';
+        btnOpen.style.cursor = '';
       }
     }
 
@@ -840,17 +958,34 @@
       showLoading();
       
       try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error("Network response was not ok");
-        const text = await response.text();
+        let text = null;
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error();
+            text = await response.text();
+        } catch (e) {
+            try {
+                // first proxy fallback
+                const p1 = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+                const r1 = await fetch(p1);
+                if (!r1.ok) throw new Error();
+                text = await r1.text();
+            } catch (e2) {
+                // second proxy fallback
+                const p2 = 'https://corsproxy.io/?' + encodeURIComponent(url);
+                const r2 = await fetch(p2);
+                if (!r2.ok) throw new Error();
+                text = await r2.text();
+            }
+        }
         
         // Artificial delay to showcase the smooth cycling loader
         setTimeout(() => {
           processPlaylistData(text);
           hideLoading();
-        }, 3000);
+        }, 1500);
       } catch (err) {
-        alert("Failed to load playlist from URL. It might be invalid, or blocked by CORS security constraints.");
+        alert("Failed to load playlist from URL. The remote server might be blocking access, or the URL is invalid.");
         hideLoading();
       }
     }
@@ -1054,19 +1189,64 @@
 
       // Play Stream
       setStatus('loading', 'Loading Stream...');
-      video.src = channel.url;
       
-      const playPromise = video.play();
-      if (playPromise !== undefined) {
-        playPromise.then(_ => {
-          setStatus('playing', 'Playing - Live');
-        }).catch(error => {
-          // Will be handled by video on-error handler mostly, 
-          // or auto-play preventions.
-          if(error.name !== "AbortError") {
-             handleVideoError();
-          }
-        });
+      // Cleanup previous hls instance
+      if (hlsInstance) {
+          hlsInstance.destroy();
+          hlsInstance = null;
+      }
+      video.src = "";
+
+      const streamUrl = channel.url;
+      
+      // Check if browser supports HLS natively (Safari)
+      if (video.canPlayType('application/vnd.apple.mpegurl')) {
+          video.src = streamUrl;
+          video.play().catch(e => {
+             if(e.name !== 'AbortError') handleVideoError();
+          });
+      } 
+      // If not natively supported, use HLS.js (Chrome, Firefox, Edge)
+      else if (typeof Hls !== 'undefined' && Hls.isSupported() && streamUrl.includes('.m3u8')) {
+          hlsInstance = new Hls({
+            debug: false,
+            maxBufferLength: 30,
+            maxMaxBufferLength: 600,
+          });
+          
+          hlsInstance.loadSource(streamUrl);
+          hlsInstance.attachMedia(video);
+          
+          hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
+              video.play().catch(e => {
+                  if(e.name !== 'AbortError') handleVideoError();
+              });
+          });
+          
+          hlsInstance.on(Hls.Events.ERROR, function(event, data) {
+              if (data.fatal) {
+                  switch (data.type) {
+                      case Hls.ErrorTypes.NETWORK_ERROR:
+                          // Network error - often CORS
+                          hlsInstance.destroy();
+                          handleVideoError("Network Error: The remote stream server might be blocking web access (CORS) or is unreachable.");
+                          break;
+                      case Hls.ErrorTypes.MEDIA_ERROR:
+                          hlsInstance.recoverMediaError();
+                          break;
+                      default:
+                          hlsInstance.destroy();
+                          handleVideoError();
+                          break;
+                  }
+              }
+          });
+      } else {
+          // Fallback (MP4 or browser doesn't support HLS at all)
+          video.src = streamUrl;
+          video.play().catch(e => {
+             if(e.name !== 'AbortError') handleVideoError();
+          });
       }
     }
 
@@ -1074,18 +1254,16 @@
     video.addEventListener('playing', () => setStatus('playing', 'Playing - Live'));
     video.addEventListener('waiting', () => setStatus('loading', 'Buffering...'));
     video.addEventListener('pause', () => setStatus('ready', 'Paused'));
-    video.addEventListener('error', handleVideoError);
+    video.addEventListener('error', () => handleVideoError());
 
-    function handleVideoError() {
+    function handleVideoError(customMsg) {
       setStatus('error', 'Error / Unsupported');
       playerErrorOverlay.classList.remove('hidden');
       
-      const isM3U8 = currentChannel && currentChannel.url && currentChannel.url.includes('.m3u8');
-      
-      if (isM3U8) {
-        playerErrorText.textContent = "This browser may not support this stream format natively. Please try Safari macOS/iOS, or Edge.";
+      if (typeof customMsg === 'string') {
+          playerErrorText.textContent = customMsg;
       } else {
-        playerErrorText.textContent = "The stream format is unsupported, the URL is dead, or Cross-Origin (CORS) access is blocked.";
+          playerErrorText.textContent = "Playback failed. Stream format unsupported, URL dead, or blocked by CORS security.";
       }
     }
 
